@@ -7,11 +7,12 @@ and (in later phases) training models and building portfolio recommendations.
 
 __version__ = "0.2.0"
 
-from src import anomaly, config, data_loader, features, portfolio, risk
+from src import anomaly, backtest, config, data_loader, features, portfolio, risk
 
 __all__ = [
     "__version__",
     "anomaly",
+    "backtest",
     "config",
     "data_loader",
     "features",
