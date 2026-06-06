@@ -8,6 +8,8 @@ from app.utils.dashboard_data import (
     PROFILE_OPTIONS,
     load_feature_importance,
     load_fold_metrics,
+    load_shap_feature_importance,
+    load_shap_summary,
     load_summary_metrics,
     run_profile_backtest,
 )
@@ -34,3 +36,13 @@ def cached_fold_metrics():
 @st.cache_data(show_spinner="Loading feature importance...")
 def cached_feature_importance():
     return load_feature_importance()
+
+
+@st.cache_data(show_spinner="Loading SHAP summary...")
+def cached_shap_summary():
+    return load_shap_summary()
+
+
+@st.cache_data(show_spinner="Loading SHAP feature importance...")
+def cached_shap_feature_importance():
+    return load_shap_feature_importance()

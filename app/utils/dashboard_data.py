@@ -11,6 +11,8 @@ from app.utils.paths import (
     FEATURE_IMPORTANCE_FILE,
     FOLD_METRICS_FILE,
     OOS_PREDICTIONS_FILE,
+    SHAP_FEATURE_IMPORTANCE_FILE,
+    SHAP_SUMMARY_FILE,
     SUMMARY_METRICS_FILE,
     ensure_project_on_path,
     outputs_dir,
@@ -40,6 +42,8 @@ class ArtifactStatus:
     summary_metrics: bool
     fold_metrics: bool
     feature_importance: bool
+    shap_summary: bool
+    shap_feature_importance: bool
 
     @property
     def any_missing(self) -> bool:
@@ -51,6 +55,10 @@ class ArtifactStatus:
             ]
         )
 
+    @property
+    def shap_missing(self) -> bool:
+        return not (self.shap_summary and self.shap_feature_importance)
+
 
 def artifact_status() -> ArtifactStatus:
     out = outputs_dir()
@@ -59,6 +67,8 @@ def artifact_status() -> ArtifactStatus:
         summary_metrics=(out / SUMMARY_METRICS_FILE).exists(),
         fold_metrics=(out / FOLD_METRICS_FILE).exists(),
         feature_importance=(out / FEATURE_IMPORTANCE_FILE).exists(),
+        shap_summary=(out / SHAP_SUMMARY_FILE).exists(),
+        shap_feature_importance=(out / SHAP_FEATURE_IMPORTANCE_FILE).exists(),
     )
 
 
@@ -77,6 +87,23 @@ def missing_artifacts_message(status: Optional[ArtifactStatus] = None) -> str:
         "Missing dashboard artifacts in `outputs/`: "
         + ", ".join(missing)
         + ". Run `python -m app.utils.export_artifacts` from the project root "
+        "to generate them (one-time; not triggered from the dashboard)."
+    )
+
+
+def missing_shap_artifacts_message(status: Optional[ArtifactStatus] = None) -> str:
+    status = status or artifact_status()
+    missing: List[str] = []
+    if not status.shap_summary:
+        missing.append(SHAP_SUMMARY_FILE)
+    if not status.shap_feature_importance:
+        missing.append(SHAP_FEATURE_IMPORTANCE_FILE)
+    if not missing:
+        return ""
+    return (
+        "Missing SHAP artifacts in `outputs/`: "
+        + ", ".join(missing)
+        + ". Run `python -m app.utils.export_shap` from the project root "
         "to generate them (one-time; not triggered from the dashboard)."
     )
 
@@ -110,6 +137,21 @@ def load_feature_importance() -> Optional[pd.DataFrame]:
     if "importance" not in df.columns and "gain" in df.columns:
         df = df.rename(columns={"gain": "importance"})
     return df
+
+
+def load_shap_summary() -> Optional[pd.DataFrame]:
+    return _read_parquet(SHAP_SUMMARY_FILE)
+
+
+def load_shap_feature_importance() -> Optional[pd.DataFrame]:
+    return _read_parquet(SHAP_FEATURE_IMPORTANCE_FILE)
+
+
+def shap_sample_count(summary: Optional[pd.DataFrame] = None) -> int:
+    df = summary if summary is not None else load_shap_summary()
+    if df is None or df.empty or "sample_index" not in df.columns:
+        return 0
+    return int(df["sample_index"].nunique())
 
 
 def run_profile_backtest(

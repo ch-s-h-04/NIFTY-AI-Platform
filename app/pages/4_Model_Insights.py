@@ -12,9 +12,21 @@ if str(ROOT) not in sys.path:
 import plotly.express as px
 import streamlit as st
 
-from app.utils.cache import cached_feature_importance, cached_summary_metrics
-from app.utils.dashboard_data import missing_artifacts_message
-from app.utils.theme import apply_figure_theme, apply_streamlit_theme
+from app.utils.cache import (
+    cached_feature_importance,
+    cached_shap_feature_importance,
+    cached_shap_summary,
+    cached_summary_metrics,
+)
+from app.utils.dashboard_data import missing_artifacts_message, missing_shap_artifacts_message
+from app.utils.shap_viz import (
+    plot_shap_importance_bar,
+    plot_shap_summary,
+    plot_signed_feature_bar,
+    top_negative_features,
+    top_positive_features,
+)
+from app.utils.theme import ACCENT, ACCENT_3, apply_figure_theme, apply_streamlit_theme
 
 
 def render() -> None:
@@ -64,10 +76,78 @@ def render() -> None:
         st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("SHAP Explainability")
-    st.info(
-        "**Phase 4B placeholder** — SHAP summary and waterfall plots will be integrated "
-        "here after approval. No SHAP computation runs in Phase 4A."
-    )
+    shap_summary = cached_shap_summary()
+    shap_importance = cached_shap_feature_importance()
+
+    if shap_summary is None or shap_importance is None or shap_summary.empty or shap_importance.empty:
+        st.warning(
+            missing_shap_artifacts_message()
+            or "SHAP artifacts not found. Run `python -m app.utils.export_shap`."
+        )
+    else:
+        shap_top_n = st.slider(
+            "SHAP top N features",
+            min_value=5,
+            max_value=25,
+            value=15,
+            step=1,
+            key="shap_top_n",
+        )
+
+        st.plotly_chart(
+            plot_shap_summary(shap_summary, shap_importance, top_n=shap_top_n),
+            use_container_width=True,
+        )
+        st.plotly_chart(
+            plot_shap_importance_bar(shap_importance, top_n=shap_top_n),
+            use_container_width=True,
+        )
+
+        pos = top_positive_features(shap_importance, n=10)
+        neg = top_negative_features(shap_importance, n=10)
+
+        col_pos, col_neg = st.columns(2)
+        with col_pos:
+            st.markdown("**Top Positive Features**")
+            st.caption("Features that increase predicted 21-day returns on average.")
+            if pos.empty:
+                st.info("No features with positive mean SHAP in this sample.")
+            else:
+                st.dataframe(
+                    pos.assign(mean_shap=pos["mean_shap"].map(lambda x: f"{x:.6f}")),
+                    use_container_width=True,
+                    hide_index=True,
+                )
+                st.plotly_chart(
+                    plot_signed_feature_bar(
+                        pos,
+                        value_col="mean_shap",
+                        title="Top Positive Mean SHAP",
+                        color=ACCENT,
+                    ),
+                    use_container_width=True,
+                )
+
+        with col_neg:
+            st.markdown("**Top Negative Features**")
+            st.caption("Features that decrease predicted 21-day returns on average.")
+            if neg.empty:
+                st.info("No features with negative mean SHAP in this sample.")
+            else:
+                st.dataframe(
+                    neg.assign(mean_shap=neg["mean_shap"].map(lambda x: f"{x:.6f}")),
+                    use_container_width=True,
+                    hide_index=True,
+                )
+                st.plotly_chart(
+                    plot_signed_feature_bar(
+                        neg,
+                        value_col="mean_shap",
+                        title="Top Negative Mean SHAP",
+                        color=ACCENT_3,
+                    ),
+                    use_container_width=True,
+                )
 
 
 render()

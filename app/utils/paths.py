@@ -26,6 +26,8 @@ OOS_PREDICTIONS_FILE = "oos_predictions.parquet"
 SUMMARY_METRICS_FILE = "summary_metrics.parquet"
 FOLD_METRICS_FILE = "fold_metrics.parquet"
 FEATURE_IMPORTANCE_FILE = "lgbm_feature_importance.parquet"
+SHAP_SUMMARY_FILE = "shap_summary.parquet"
+SHAP_FEATURE_IMPORTANCE_FILE = "shap_feature_importance.parquet"
 
 
 def outputs_dir() -> Path:

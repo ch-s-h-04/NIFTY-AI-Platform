@@ -86,15 +86,32 @@ def _test_artifact_io() -> None:
         assert len(bt.portfolio_equity) > 0
 
 
+def _test_shap_artifact_io() -> None:
+    status = dashboard_data.artifact_status()
+    if status.shap_missing:
+        assert dashboard_data.missing_shap_artifacts_message(status)
+        return
+    summary = dashboard_data.load_shap_summary()
+    importance = dashboard_data.load_shap_feature_importance()
+    assert summary is not None and not summary.empty
+    assert importance is not None and not importance.empty
+    assert dashboard_data.shap_sample_count(summary) > 0
+    from app.utils.shap_viz import plot_shap_importance_bar, plot_shap_summary
+
+    theme.apply_figure_theme(plot_shap_summary(summary, importance, top_n=10))
+    theme.apply_figure_theme(plot_shap_importance_bar(importance, top_n=10))
+
+
 def main() -> int:
     checks = [
         ("compile_pages", _compile_pages),
         ("import_pages", _import_pages),
         ("plotly_charts", _test_plotly_charts),
         ("artifact_io", _test_artifact_io),
+        ("shap_artifact_io", _test_shap_artifact_io),
     ]
     print("=" * 60)
-    print("Phase 4A Dashboard Verification")
+    print("Phase 4 Dashboard Verification")
     print("=" * 60)
     passed = True
     for name, fn in checks:
@@ -110,9 +127,20 @@ def main() -> int:
     print(f"  oos_predictions:     {status.oos_predictions}")
     print(f"  summary_metrics:     {status.summary_metrics}")
     print(f"  feature_importance:  {status.feature_importance}")
+    print(f"  shap_summary:        {status.shap_summary}")
+    print(f"  shap_importance:     {status.shap_feature_importance}")
     if status.any_missing:
         print()
         print(dashboard_data.missing_artifacts_message(status))
+    if status.shap_missing:
+        print()
+        print(dashboard_data.missing_shap_artifacts_message(status))
+    elif dashboard_data.load_shap_feature_importance() is not None:
+        top = dashboard_data.load_shap_feature_importance().head(10)
+        print()
+        print(f"SHAP samples: {dashboard_data.shap_sample_count()}")
+        print("Top 10 SHAP features (mean |SHAP|):")
+        print(top[["feature", "mean_abs_shap", "mean_shap"]].to_string(index=False))
     print()
     print("ALL CHECKS PASSED" if passed else "VERIFICATION FAILED")
     return 0 if passed else 1
