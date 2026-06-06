@@ -11,7 +11,15 @@ from typing import List, Dict, Optional
 import pandas as pd
 import numpy as np
 
-from src.config import NIFTY50_DIR, INDEX_DIR, METADATA_FILE, EQUITY_SCHEMA
+from src.config import (
+    DATA_DIR,
+    NIFTY50_DIR,
+    INDEX_DIR,
+    METADATA_FILE,
+    EQUITY_SCHEMA,
+    resolve_canonical_symbol,
+    resolve_symbol_filename,
+)
 
 logger = logging.getLogger("NIFTY_AI_DataLoader")
 
@@ -42,14 +50,19 @@ def load_stock_data(symbol: str) -> pd.DataFrame:
     Loads individual historical stock daily records.
 
     Args:
-        symbol (str): Equity ticker symbol (e.g., 'ADANIPORTS').
+        symbol (str): Equity ticker symbol (e.g., 'ADANIPORTS', 'M&M', or 'MM').
 
     Returns:
         pd.DataFrame: Cleaned daily historical dataframe.
     """
-    file_path = os.path.join(NIFTY50_DIR, f"{symbol}.csv")
+    canonical = resolve_canonical_symbol(symbol)
+    filename_stem = resolve_symbol_filename(symbol)
+    file_path = os.path.join(NIFTY50_DIR, f"{filename_stem}.csv")
     if not os.path.exists(file_path):
-        logger.warning(f"File for stock {symbol} not found at {file_path}")
+        logger.warning(
+            f"File for stock '{symbol}' (canonical: '{canonical}', "
+            f"expected file: '{filename_stem}.csv') not found at {file_path}"
+        )
         return pd.DataFrame()
 
     try:
@@ -66,6 +79,9 @@ def load_stock_data(symbol: str) -> pd.DataFrame:
         
         # Sort values chronologically
         df = df.sort_values('Date').reset_index(drop=True)
+        logger.info(
+            f"Loaded stock '{canonical}' from {filename_stem}.csv with shape {df.shape}"
+        )
         return df
     except Exception as e:
         logger.error(f"Error loading data for symbol {symbol}: {e}")
@@ -76,24 +92,56 @@ def load_index_data(index_name: str) -> pd.DataFrame:
     """
     Loads historical index data (e.g., 'NIFTY 50' or 'INDIA VIX').
 
+    Gracefully returns an empty DataFrame when the archive dataset or a
+    specific index file is missing, with a clear log message.
+
     Args:
         index_name (str): Filename without extension in INDEX folder.
 
     Returns:
-        pd.DataFrame: Cleaned index dataframe.
+        pd.DataFrame: Cleaned index dataframe, or empty if data is unavailable.
     """
+    archive_dir = os.path.join(DATA_DIR, "archive (1)")
+    if not os.path.isdir(archive_dir):
+        logger.warning(
+            f"Archive data directory not found at '{archive_dir}'. "
+            f"Cannot load index '{index_name}'. "
+            "Extract or copy the archive dataset to data/archive (1)/Datasets/INDEX/."
+        )
+        return pd.DataFrame()
+
+    if not os.path.isdir(INDEX_DIR):
+        logger.warning(
+            f"Index directory not found at '{INDEX_DIR}'. "
+            f"Cannot load index '{index_name}'. "
+            "Expected CSV files such as 'NIFTY 50.csv' and 'INDIA VIX.csv'."
+        )
+        return pd.DataFrame()
+
     file_path = os.path.join(INDEX_DIR, f"{index_name}.csv")
     if not os.path.exists(file_path):
-        logger.warning(f"Index file {index_name} not found at {file_path}")
+        available = sorted(
+            os.path.splitext(f)[0]
+            for f in os.listdir(INDEX_DIR)
+            if f.lower().endswith(".csv")
+        )
+        hint = f" Available indices: {', '.join(available[:8])}" if available else ""
+        if len(available) > 8:
+            hint += f" (and {len(available) - 8} more)"
+        logger.warning(
+            f"Index file '{index_name}.csv' not found at '{file_path}'.{hint}"
+        )
         return pd.DataFrame()
 
     try:
         df = pd.read_csv(file_path, parse_dates=['Date'])
         df = df.sort_values('Date').reset_index(drop=True)
-        logger.info(f"Loaded index {index_name} with shape {df.shape}")
+        logger.info(f"Loaded index '{index_name}' with shape {df.shape}")
         return df
     except Exception as e:
-        logger.error(f"Error loading index {index_name}: {e}")
+        logger.error(
+            f"Failed to parse index '{index_name}' from '{file_path}': {e}"
+        )
         return pd.DataFrame()
 
 

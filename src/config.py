@@ -26,6 +26,47 @@ INDEX_DIR = os.path.join(DATA_DIR, "archive (1)", "Datasets", "INDEX")
 
 METADATA_FILE = os.path.join(NIFTY50_DIR, "stock_metadata.csv")
 
+# Symbol aliases: canonical metadata symbol -> on-disk CSV filename stem
+# (e.g. metadata lists "M&M" but the file is MM.csv)
+SYMBOL_FILENAME_ALIASES: Dict[str, str] = {
+    "M&M": "MM",
+}
+
+# Reverse lookup: filename stem -> canonical symbol
+_FILENAME_TO_CANONICAL: Dict[str, str] = {
+    filename: canonical for canonical, filename in SYMBOL_FILENAME_ALIASES.items()
+}
+
+
+def resolve_canonical_symbol(symbol: str) -> str:
+    """
+    Resolve a symbol or filename stem to its canonical metadata symbol.
+
+    Args:
+        symbol: Ticker as used in metadata (e.g. 'M&M') or on disk (e.g. 'MM').
+
+    Returns:
+        Canonical symbol name used in SYMBOLS and SECTOR_MAP.
+    """
+    if symbol in SYMBOL_FILENAME_ALIASES:
+        return symbol
+    return _FILENAME_TO_CANONICAL.get(symbol, symbol)
+
+
+def resolve_symbol_filename(symbol: str) -> str:
+    """
+    Resolve a symbol to the CSV filename stem under data/nifty50/.
+
+    Args:
+        symbol: Canonical or alias ticker (e.g. 'M&M' or 'MM').
+
+    Returns:
+        Filename stem without extension (e.g. 'MM' for M&M).
+    """
+    canonical = resolve_canonical_symbol(symbol)
+    return SYMBOL_FILENAME_ALIASES.get(canonical, canonical)
+
+
 # Expected columns and datatypes for equity data
 EQUITY_SCHEMA = {
     'Date': 'datetime64[ns]',
@@ -83,7 +124,7 @@ def discover_symbols_and_sectors() -> tuple[List[str], Dict[str, str]]:
                     # Exclude aggregated files and metadata file itself
                     if file in ("NIFTY50_all.csv", "stock_metadata.csv"):
                         continue
-                    symbol = os.path.splitext(file)[0]
+                    symbol = resolve_canonical_symbol(os.path.splitext(file)[0])
                     symbols.append(symbol)
                     sector_map[symbol] = "Unknown"  # Default sector since metadata is missing
             logger.info(f"Discovered {len(symbols)} symbols from filenames in: {NIFTY50_DIR}")
