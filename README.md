@@ -1,127 +1,614 @@
 # NIFTY-50 AI Investment Intelligence Platform
 
-An AI-powered decision-support platform for NIFTY-50 constituent stocks and market indices (2000–2021). The project ingests historical NSE equity and index data, engineers technical and macro features, and will eventually deliver medium-term alpha signals, risk-aware portfolio construction, and explainable recommendations via a Streamlit dashboard.
+<p align="center">
+  <img src="assets/dashboard_home.png" width="1000">
+</p>
 
-## Dataset Description
+An AI-powered decision-support platform for stock forecasting, portfolio construction, risk assessment, and explainable investment analytics using NIFTY-50 market data.
+Built for the Data-Driven Investment Intelligence Challenge using historical NIFTY-50 market data, machine learning forecasting, portfolio optimization, risk analytics, and explainable AI.
 
-The workspace uses three primary data sources:
+## Overview
 
-1. **Constituent equities** (`data/nifty50/`)
-   - One CSV per NIFTY-50 stock (e.g. `INFY.csv`, `MM.csv` for Mahindra & Mahindra).
-   - Columns: `Date`, `Symbol`, `Series`, OHLC, `VWAP`, `Volume`, `Turnover`, `Trades`, deliverable volume fields.
-   - `NIFTY50_all.csv` — vertically stacked records for all constituents.
-   - `stock_metadata.csv` — symbol-to-industry mapping (canonical symbols such as `M&M`).
 
-2. **Market indices & volatility** (`data/archive (1)/Datasets/INDEX/`)
-   - `NIFTY 50.csv` — benchmark index (master trading calendar).
-   - `INDIA VIX.csv` — volatility index (from July 2010).
-   - Sector indices (e.g. `NIFTY IT.csv`, `NIFTY BANK.csv`) for relative-strength features.
+The **NIFTY-50 AI Investment Intelligence Platform** is an end-to-end decision-support system designed to assist investors in analyzing market behavior, evaluating investment opportunities, constructing risk-aware portfolios, and understanding the factors driving investment recommendations.
 
-3. **Full NSE scrip archive** (`data/archive (1)/Datasets/SCRIP/`) — optional extended universe (gitignored by default).
+The platform transforms historical market data into practical investment intelligence by combining forecasting, portfolio optimization, risk analytics, and explainable AI within a single decision-support framework.
+Built using historical NSE market data from January 2000 to April 2021, the platform combines machine learning, portfolio optimization, risk analytics, explainable AI, and interactive visualization into a unified workflow.
 
-> **Note:** The `data/archive (1)/` folder is listed in `.gitignore`. Copy or extract the archive dataset locally before running index-dependent notebooks or features.
+Unlike traditional stock-price prediction systems, this project focuses on delivering **actionable investment intelligence** through interpretable forecasts, portfolio recommendations, risk assessment, and performance benchmarking.
 
-### Symbol aliases
+---
 
-Some metadata symbols differ from on-disk filenames. For example, metadata lists `M&M` but the file is `MM.csv`. The `src.config` module resolves these via `resolve_canonical_symbol()` and `resolve_symbol_filename()`.
+## Challenge Coverage
 
-## Current Project Status
+| Requirement | Status |
+|------------|---------|
+| Stock Predictor Engine | ✅ Implemented |
+| Portfolio Construction Module | ✅ Implemented |
+| Risk Assessment Module | ✅ Implemented |
+| Explainable AI | ✅ Implemented |
+| Personalized Investor Profiles | ✅ Implemented |
+| Interactive Dashboard Deployment | ✅ Implemented |
 
-| Phase | Scope | Status |
-|-------|--------|--------|
-| **Phase 1** | Data loaders, EDA notebook | Complete |
-| **Phase 2** | Feature engineering (`features.py`), feature analysis notebook | Complete |
-| **Phase 3** | Portfolio optimization, risk engine, backtesting | Not started |
-| **Phase 4** | SHAP explainability, Streamlit dashboard, report | Not started |
+## Key Features
 
-Implemented modules:
+### Stock Predictor Engine
 
-- `src/config.py` — paths, schemas, symbol discovery, aliases
-- `src/data_loader.py` — stock/index loading, aligned price panels
-- `src/features.py` — technical, momentum, risk, and index overlays
-- `src/anomaly.py` — placeholder for future anomaly detection
+* Predicts 21-day forward stock returns
+* Walk-forward cross-validation framework
+* Purged time-series splits to prevent data leakage
+* Supports:
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full system design and roadmap.
+  * Ridge Regression
+  * LightGBM
 
-## Folder Structure
+### Portfolio Construction Module
 
+Generates portfolios for different investor profiles:
+
+#### Conservative
+
+* Minimum Variance Optimization
+* Maximum stock weight: 5%
+* Maximum sector weight: 20%
+* Cash allocation when constraints prevent full deployment
+
+#### Balanced
+
+* Maximum Sharpe Ratio Optimization
+* Maximum stock weight: 10%
+* Maximum sector weight: 25%
+
+#### Aggressive
+
+* Black-Litterman Optimization
+* Uses model predictions as investment views
+* Maximum stock weight: 15%
+* Maximum sector weight: 30%
+
+### Risk Assessment Module
+
+Computes portfolio and benchmark risk metrics:
+
+* Annualized Return
+* Annualized Volatility
+* Sharpe Ratio
+* Sortino Ratio
+* Maximum Drawdown
+* Historical VaR (95%)
+* Historical CVaR (95%)
+
+### Explainable AI
+
+* LightGBM Feature Importance
+* SHAP Value Analysis
+* Feature contribution visualization
+* Transparent model interpretation
+
+### Interactive Dashboard
+
+Built using Streamlit with:
+
+* Portfolio Overview
+* Risk Analytics
+* Benchmark Comparison
+* Model Insights & Explainability
+
+---
+## Technology Stack
+
+| Category | Tools |
+|----------|--------|
+| Language | Python |
+| ML Models | LightGBM, Ridge Regression |
+| Data Processing | Pandas, NumPy |
+| Technical Indicators | TA-Lib style custom features |
+| Optimization | PyPortfolioOpt |
+| Explainability | SHAP |
+| Visualization | Plotly |
+| Dashboard | Streamlit |
+| Storage | Parquet |
+
+# Dataset
+
+Dataset Source:
+
+NIFTY-50 Stock Market Dataset
+
+https://www.kaggle.com/datasets/rohanrao/nifty50-stock-market-data/data
+
+Additional Dataset:
+
+https://www.kaggle.com/datasets/stoicstatic/india-stock-data-nse-1990-2020
+
+The project uses only datasets permitted by the competition guidelines.
+
+### Data Includes
+
+#### Historical Stock Data
+
+* Open
+* High
+* Low
+* Close
+* Volume
+* Turnover
+
+#### Market Indices
+
+* NIFTY 50
+* INDIA VIX
+* Sectoral Indices
+
+#### Metadata
+
+* Company Name
+* Industry
+* Sector Classification
+
+---
+
+# System Architecture
+
+```text
+Raw Market Data
+       │
+       ▼
+Data Loader
+       │
+       ▼
+Feature Engineering
+       │
+       ▼
+Prediction Models
+(Ridge + LightGBM)
+       │
+       ▼
+OOS Predictions
+       │
+       ▼
+Portfolio Optimization
+       │
+       ▼
+Risk Assessment
+       │
+       ▼
+Backtesting Engine
+       │
+       ▼
+SHAP Explainability
+       │
+       ▼
+Streamlit Dashboard
 ```
-NIFTY-AI-Platform/
+
+---
+
+# Feature Engineering
+
+More than 50 engineered features are generated from historical price and volume data.
+
+### Trend Indicators
+
+* SMA 20
+* SMA 50
+* SMA 200
+* EMA 20
+* EMA 50
+* EMA 200
+
+### Momentum Indicators
+
+* RSI
+* MACD
+* Momentum
+* Rate of Change
+
+### Volatility Indicators
+
+* ATR
+* Rolling Volatility
+* Bollinger Bands
+
+### Market Features
+
+* Beta
+* Relative Strength
+* Sector Relative Performance
+* VIX Features
+
+### Liquidity Features
+
+* Volume Trends
+* Turnover Metrics
+
+---
+
+# Stock Predictor Engine
+
+### Prediction Horizon
+
+21 Trading Days
+
+### Validation Method
+
+Purged Walk-Forward Cross Validation
+
+### Models
+
+#### Ridge Regression
+
+Used as a robust linear benchmark.
+
+#### LightGBM
+
+Used as the primary nonlinear forecasting model.
+
+### Evaluation Metrics
+
+* Mean Absolute Error (MAE)
+* Root Mean Squared Error (RMSE)
+* Directional Accuracy
+* Information Coefficient (IC)
+* Rank Information Coefficient (Rank IC)
+
+---
+
+# Portfolio Construction
+
+Three portfolio profiles are supported.
+
+| Profile      | Optimizer        | Stock Cap | Sector Cap |
+| ------------ | ---------------- | --------- | ---------- |
+| Conservative | Minimum Variance | 5%        | 20%        |
+| Balanced     | Maximum Sharpe   | 10%       | 25%        |
+| Aggressive   | Black-Litterman  | 15%       | 30%        |
+
+Fallback hierarchy:
+
+```text
+Primary Optimizer
+       ↓
+Risk Parity
+       ↓
+Equal Weight
+```
+
+---
+
+# Risk Management
+
+The platform evaluates both portfolio-level and benchmark-level risk.
+
+### Metrics
+
+* Sharpe Ratio
+* Sortino Ratio
+* Volatility
+* Maximum Drawdown
+* VaR (95%)
+* CVaR (95%)
+
+### Covariance Estimation
+
+Ledoit-Wolf Covariance Shrinkage
+
+---
+
+# Backtesting Framework
+
+### Rebalancing
+
+Monthly
+
+### Execution Policy
+
+Signal generated at:
+
+```text
+Close(t)
+```
+
+Executed at:
+
+```text
+Open(t+1)
+```
+
+### Transaction Costs
+
+0.10% one-way slippage
+
+### Benchmark
+
+NIFTY 50 Buy-and-Hold
+
+### No Look-Ahead Bias
+
+All forecasts, covariance estimates, and portfolio decisions use only information available up to the decision date.
+
+---
+
+# Explainability
+
+SHAP explainability is integrated into the pipeline.
+
+### Available Visualizations
+
+* Feature Importance Ranking
+* SHAP Summary Plot
+* Positive Feature Contributions
+* Negative Feature Contributions
+
+Example top drivers include:
+
+* EMA 200
+* SMA 200
+* SMA 50
+* Beta 60
+* ATR 14
+* VIX Level
+
+---
+
+# Sample Results
+
+### Balanced Portfolio (2010–2018)
+
+| Metric | Value |
+|----------|----------|
+| CAGR | 5.35% |
+| Sharpe Ratio | -0.08 |
+| Sortino Ratio | -0.07 |
+| Maximum Drawdown | -29.08% |
+| Annualized Volatility | 15.16% |
+| VaR (95%) | 1.59% |
+| CVaR (95%) | 2.37% |
+
+### Walk-Forward Validation (21-Day Horizon)
+
+| Model | MAE | RMSE | Directional Accuracy |
+|---------|---------|---------|---------|
+| Ridge Regression | 0.0665 | 0.0972 | 47.6% |
+| LightGBM | 0.0733 | 0.1049 | 49.6% |
+
+---
+# Dashboard
+
+The platform is deployed as an interactive Streamlit application that enables users to explore portfolio performance, risk characteristics, benchmark comparisons, and model explainability through four dedicated modules.
+
+---
+
+## Dashboard Preview
+
+### Home Dashboard
+
+<p align="center">
+  <img src="assets/dashboard_home.png" width="900">
+</p>
+
+### Portfolio Overview
+
+<p align="center">
+  <img src="assets/portfolio_overview.png" width="900">
+</p>
+
+### Risk Analytics
+
+<p align="center">
+  <img src="assets/risk_analytics.png" width="900">
+</p>
+
+### Benchmark Comparison
+
+<p align="center">
+  <img src="assets/benchmark_comparison.png" width="900">
+</p>
+
+### Model Insights & Explainability
+
+<p align="center">
+  <img src="assets/model_insights.png" width="900">
+</p>
+
+---
+
+## Dashboard Modules
+
+### Portfolio Overview
+Provides a high-level summary of portfolio performance, including:
+
+- Equity Curve
+- CAGR (Compound Annual Growth Rate)
+- Sharpe Ratio
+- Sortino Ratio
+- Maximum Drawdown
+
+### Risk Analytics
+Offers detailed risk assessment and downside analysis:
+
+- Value at Risk (VaR)
+- Conditional Value at Risk (CVaR)
+- Rolling Annualized Volatility
+- Drawdown Profile Analysis
+
+### Benchmark Comparison
+Compares portfolio performance against the NIFTY 50 benchmark:
+
+- Portfolio vs NIFTY 50 Equity Curves
+- Relative Performance Analysis
+- Return & Risk Comparison
+- Drawdown Comparison
+
+### Model Insights & Explainability
+Provides transparency into model behavior and predictions:
+
+- Walk-Forward Validation Metrics
+- Feature Importance Analysis
+- SHAP Explainability Visualizations
+- Positive and Negative Feature Contributions
+
+# Repository Structure
+
+```text
+NIFTY-AI-Platform
+│
+├── app/
+│   ├── main.py
+│   ├── pages/
+│   └── utils/
+│
+├── assets/
+│   ├── dashboard_home.png
+│   ├── portfolio_overview.png
+│   ├── risk_analytics.png
+│   ├── benchmark_comparison.png
+│   └── model_insights.png
+│
 ├── data/
-│   ├── nifty50/                  # NIFTY-50 constituent CSVs + metadata
-│   └── archive (1)/
-│       └── Datasets/
-│           ├── INDEX/            # Benchmark & sector indices (local only)
-│           └── SCRIP/            # Full NSE scrip history (local only)
+│
+├── notebooks/
+│   ├── 1.0_exploratory_analysis.ipynb
+│   ├── 2.0_feature_analysis.ipynb
+│   └── 3.0_model_training.ipynb
+│
+├── outputs/
+│
 ├── src/
-│   ├── __init__.py
 │   ├── config.py
 │   ├── data_loader.py
 │   ├── features.py
-│   └── anomaly.py
-├── notebooks/
-│   ├── 1.0_exploratory_analysis.ipynb
-│   └── 2.0_feature_analysis.ipynb
+│   ├── models.py
+│   ├── risk.py
+│   ├── portfolio.py
+│   └── backtest.py
+│
 ├── ARCHITECTURE.md
 ├── requirements.txt
 └── README.md
 ```
 
-## Installation
+### Future Extensions
 
-1. **Clone the repository** and enter the project root:
+A preliminary anomaly detection module (`src/anomaly.py`) is included as a planned extension for:
 
-   ```bash
-   git clone <repository-url>
-   cd NIFTY-AI-Platform
-   ```
+- Volatility spike detection
+- Abnormal volume detection
+- Extreme drawdown event detection
 
-2. **Create a virtual environment** (recommended):
+This module is currently a design stub and is not part of the evaluated pipeline.
 
-   ```bash
-   python -m venv .venv
-   # Windows
-   .venv\Scripts\activate
-   # macOS / Linux
-   source .venv/bin/activate
-   ```
+---
 
-3. **Install dependencies**:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Place datasets locally**:
-   - Ensure `data/nifty50/` contains constituent CSVs and `stock_metadata.csv`.
-   - Extract the archive bundle to `data/archive (1)/Datasets/INDEX/` (and optionally `SCRIP/`) for index and VIX features.
-
-## Running Notebooks
-
-From the project root, launch Jupyter:
+# Installation
 
 ```bash
-jupyter notebook
+git clone https://github.com/ch-s-h-04/NIFTY-AI-Platform.git
+
+cd NIFTY-AI-Platform
+
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+
+# Linux / Mac
+source .venv/bin/activate
+
+pip install -r requirements.txt
 ```
 
-Open notebooks under `notebooks/`. Each notebook prepends the parent directory to `sys.path` so `src` imports work when the kernel cwd is `notebooks/`:
+---
 
-- `1.0_exploratory_analysis.ipynb` — Phase 1 EDA (metadata, missing values, sectors, correlations, regimes).
-- `2.0_feature_analysis.ipynb` — Phase 2 feature matrix, visualizations, collinearity, leakage checks.
+# Generate Artifacts
 
-Alternatively, register the project root as the Jupyter kernel working directory or install the package in editable mode if you add a `pyproject.toml` later.
-
-## Future Roadmap
-
-```
-Phase 1 (EDA) ──> Phase 2 (Features) ──> Phase 3 (Portfolio & Risk) ──> Phase 4 (Streamlit & XAI)
+```bash
+python -m app.utils.export_artifacts
 ```
 
-- **Phase 3** — `portfolio.py`, `risk.py`: MVO with covariance shrinkage, Black-Litterman, VaR/CVaR, drawdown metrics, backtests with transaction costs.
-- **Phase 4** — `explainers.py`, `app/dashboard.py`: SHAP explanations, interactive Streamlit prototype, technical report.
+Generates:
 
-Planned additions not yet in the repo: `models.py`, `portfolio.py`, `risk.py`, `explainers.py`, `app/dashboard.py`.
+```text
+outputs/
+├── oos_predictions.parquet
+├── summary_metrics.parquet
+├── fold_metrics.parquet
+└── lgbm_feature_importance.parquet
+```
 
-## License
+---
 
-See repository license terms if provided by the project owner.
+# Generate SHAP Artifacts
+
+```bash
+python -m app.utils.export_shap
+```
+
+Generates:
+
+```text
+outputs/
+├── shap_summary.parquet
+└── shap_feature_importance.parquet
+```
+
+---
+
+# Run Dashboard
+
+```bash
+streamlit run app/main.py
+```
+
+or
+
+```bash
+python -m streamlit run app/main.py
+```
+
+---
+
+# Reproducibility
+
+The repository contains:
+
+* Complete source code
+* Feature engineering pipeline
+* Model training workflow
+* Portfolio optimization engine
+* Risk assessment framework
+* Explainability module
+* Streamlit dashboard
+
+All results can be reproduced using only the datasets provided by the competition organizers.
+
+---
+
+# Competition Alignment
+
+This project satisfies all mandatory tasks:
+
+* Stock Predictor Engine
+* Portfolio Construction Module
+* Risk Assessment Module
+
+And implements several optional tasks:
+
+* Explainable AI
+* Personalized Investment Profiles
+* Forecasting Framework
+* Interactive Dashboard Deployment
+
+---
+
+# Authors
+
+**Chiranshu Sarraf**
+
+Mechanical Engineering, IIT Roorkee
+
+---
+
+# Disclaimer
+
+This project is developed for educational and research purposes as part of an AI-driven investment intelligence challenge. It does not constitute financial advice or investment recommendations.
